@@ -6,7 +6,6 @@
 * Thanks for using my library!					  |
 * ------------------------------------------------|
 * TODO:											  |
-* - Add support for more platforms (Linux, macOS).|
 * - Add thread safety for logging.				  |
 \________________________________________________*/
 
@@ -162,16 +161,23 @@ double meb_get_time(const MebTimeMode mode) {
 	QueryPerformanceCounter(&counter);
 
 	double time = (double)counter.QuadPart / frequency.QuadPart;
-	switch (mode) {
-	case MEB_SECONDS:      return time;
-	case MEB_MILLISECONDS: return time * 1e3;
-	case MEB_MICROSECONDS: return time * 1e6;
-	case MEB_NANOSECONDS:  return time * 1e9;
-	}
-	return time;
+
+#elif defined __linux__ || defined __APPLE__
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    double time = (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9;
+    
 #else
 #warning "High-resolution timing is not implemented for this platform."
 #endif
+    
+    switch (mode) {
+    case MEB_SECONDS:      return time;
+    case MEB_MILLISECONDS: return time * 1e3;
+    case MEB_MICROSECONDS: return time * 1e6;
+    case MEB_NANOSECONDS:  return time * 1e9;
+    }
+    return time;
 }
 
 char meb_time_unit(const MebTimeMode mode) {
