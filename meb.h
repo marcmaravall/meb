@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+
+#define __USE_POSIX199309
 #include <time.h>
 
 #ifndef MEB_NO_LOG
