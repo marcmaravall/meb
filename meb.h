@@ -20,22 +20,43 @@
 #include <string.h>
 #include <assert.h>
 
+#ifndef __USE_POSIX199309
 #define __USE_POSIX199309
+#endif
+
 #include <time.h>
 
 #ifndef MEB_NO_LOG
+#define MEB_INIT(file_path) meb_init(&meb, file_path)
+
+#define MEB_PROF_START() meb_prof_start(&meb)
+#define MEB_PROF_END() meb_prof_end(&meb)
+#define MEB_PROF_MODE(mode) meb_prof_mode(&meb, mode)
+
 #define MEB_ASSERT(expr) assert(expr)
-#define MEB_LOG(ctx, m) meb_log(ctx, m)
-#define MEB_LOGF(ctx, fmt, ...) \
+#define MEB_STATIC_ASSERT(a, b) static_assert(a, b)
+
+#define MEB_LOG(m) meb_log(&meb, m)
+#define MEB_LOGF(fmt, ...) \
     do { \
         char buf[MEB_BUFF_SIZE]; \
         snprintf(buf, MEB_BUFF_SIZE, fmt, __VA_ARGS__); \
-        meb_log(ctx, buf); \
+        meb_log(&meb, buf); \
     } while(0)
+#define MEB_CLOSE() meb_close(&meb)
 #else
+#define MEB_INIT(file_path) ((void)0)
+
+#define MEB_PROF_START() ((void)0)
+#define MEB_PROF_END() ((void)0)
+#define MEB_PROF_MODE(mode) ((void)0)
+
 #define MEB_ASSERT(expr) ((void)0)
-#define MEB_LOG(ctx, m) ((void)0)
-#define MEB_LOGF(ctx, fmt, ...) ((void)0)
+#define MEB_STATIC_ASSERT(a, b) static_assert(a, b)
+
+#define MEB_LOG(m) ((void)0)
+#define MEB_LOGF(fmt, ...) ((void)0)
+#define MEB_CLOSE() ((void)0)
 #endif // MEB_NO_LOG
 
 #define MEB_BUFF_SIZE 256
@@ -65,6 +86,9 @@ typedef struct {
 	MebTimeMode time_mode;
 	MebLogLevel log_level;
 } MebContext;
+
+// GLOBAL CONTEXT:
+extern MebContext meb;
 
 double meb_get_time(const MebTimeMode mode);
 
@@ -109,6 +133,9 @@ void meb_init(MebContext* ctx, const char* file) {
 
 #ifndef MEB_LOG_IMPLEMENTATION
 #define MEB_LOG_IMPLEMENTATION
+
+MebContext meb;
+
 void meb_log(MebContext* ctx, const char* message) {
 	MEB_ASSERT(ctx);
 	char* level_str = meb_log_level_str(ctx->log_level);
